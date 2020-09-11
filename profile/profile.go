@@ -2,6 +2,7 @@ package profile
 
 import (
 	"fmt"
+	"goferment/hardware"
 	"time"
 )
 
@@ -21,10 +22,11 @@ func profileLoop(ch chan string) {
 	}
 }
 
-func commandLoop(ch chan string) {
+func commandLoop(ch, hwCh chan string) {
 	for {
 		message := <-ch
 		fmt.Println("Message for cmdLoop: &v", message)
+		hwCh <- message
 	}
 }
 
@@ -34,7 +36,10 @@ func StartProfile(ch, cmdCh chan string) {
 	// stepNumber := 0
 	// startTime := time.Now().Unix()
 
+	hwCh := make(chan string)
+
+	go hardware.Hardware(hwCh)
 	go profileLoop(ch)
-	go commandLoop(cmdCh)
+	go commandLoop(cmdCh, hwCh)
 
 }
