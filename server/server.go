@@ -11,7 +11,7 @@ func router(ch chan string) http.Handler {
 	e := gin.New()
 	e.Use(gin.Recovery())
 	e.GET("/", func(c *gin.Context) {
-		ch <- "web"
+		ch <- "on"
 		c.JSON(
 			http.StatusOK,
 			gin.H{
@@ -22,7 +22,7 @@ func router(ch chan string) http.Handler {
 	})
 
 	e.GET("/test", func(c *gin.Context) {
-		ch <- "web2"
+		ch <- "off"
 		c.JSON(
 			http.StatusOK,
 			gin.H{

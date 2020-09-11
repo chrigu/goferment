@@ -23,10 +23,11 @@ func Hardware(ch chan string) {
 
 	for {
 		cmd := <-ch
-
+                fmt.Println("HW received", cmd)
 		switch {
 		case cmd == "on":
 			pin.High()
+			fmt.Println("high")
 		case cmd == "off":
 			pin.Low()
 		}

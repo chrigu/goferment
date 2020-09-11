@@ -44,11 +44,12 @@ func listener(c1, c2, c3 chan string) {
 		select {
 		case webMsg := <-c1:
 			fmt.Println("received", webMsg)
-			if webMsg == "web2" {
-				c3 <- "stop"
-			}
+			c3 <- webMsg 
 		case msg2 := <-c2:
 			fmt.Println("received", msg2)
+			if msg2 == "off" {
+				c3 <- "off"
+			}
 		}
 	}
 }
