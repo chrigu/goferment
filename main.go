@@ -40,11 +40,11 @@ func main() {
 }
 
 func listener(c1, c2, c3 chan string) {
-	for i := 0; i < 100; i++ {
+	for {
 		select {
 		case webMsg := <-c1:
 			fmt.Println("received", webMsg)
-			c3 <- webMsg 
+			c3 <- webMsg
 		case msg2 := <-c2:
 			fmt.Println("received", msg2)
 			if msg2 == "off" {

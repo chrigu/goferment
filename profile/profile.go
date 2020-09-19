@@ -2,7 +2,8 @@ package profile
 
 import (
 	"fmt"
-	"goferment/hardware"
+	"goferment/actor"
+	"goferment/sensor"
 	"time"
 )
 
@@ -22,11 +23,15 @@ func profileLoop(ch chan string) {
 	}
 }
 
-func commandLoop(ch, hwCh chan string) {
+func commandLoop(ch, hwCh chan string, sensorCh chan float64) {
 	for {
-		message := <-ch
-		fmt.Println("Message for cmdLoop: &v", message)
-		hwCh <- message
+		select {
+		case message := <-ch:
+			fmt.Println("Message for cmdLoop: &v", message)
+			hwCh <- message
+		case sensorData := <-sensorCh:
+			fmt.Println("Temperature: &v", sensorData)
+		}
 	}
 }
 
@@ -37,9 +42,11 @@ func StartProfile(ch, cmdCh chan string) {
 	// startTime := time.Now().Unix()
 
 	hwCh := make(chan string)
+	sensorCh := make(chan float64)
 
-	go hardware.Hardware(hwCh)
+	go actor.Hardware(hwCh)
+	go sensor.Ds18b20(sensorCh)
 	go profileLoop(ch)
-	go commandLoop(cmdCh, hwCh)
+	go commandLoop(cmdCh, hwCh, sensorCh)
 
 }
