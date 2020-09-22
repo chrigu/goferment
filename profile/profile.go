@@ -8,9 +8,9 @@ import (
 )
 
 type Step struct {
-	temperature float32
-	duration    int
-	name        string
+	Temperature float32
+	Duration    int
+	Name        string
 }
 
 type Profile []Step
@@ -41,11 +41,15 @@ func StartProfile(ch, cmdCh chan string) {
 	// stepNumber := 0
 	// startTime := time.Now().Unix()
 
+	var ds18b20 sensor.Ds18b20
+
 	hwCh := make(chan string)
 	sensorCh := make(chan float64)
 
+	ds18b20.Init(sensorCh)
+
 	go actor.Hardware(hwCh)
-	go sensor.Ds18b20(sensorCh)
+	go ds18b20.StartCapture()
 	go profileLoop(ch)
 	go commandLoop(cmdCh, hwCh, sensorCh)
 

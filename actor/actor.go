@@ -7,6 +7,11 @@ import (
 	"github.com/stianeikeland/go-rpio"
 )
 
+type Actor struct {
+	name string
+	actorType int
+}
+
 // StartProfile starts a defined temperature profile with one or multiple steps
 func Hardware(ch chan string) {
 
