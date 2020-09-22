@@ -28,20 +28,28 @@ func (sensor Ds18b20) Init(valueChannel chan float64) {
 	}
 
 	sensor.sensors = sensors
+	fmt.Printf("sensor IDs: %v\n", sensor.sensors)
 	sensor.valueChannel = valueChannel
 }
 
 func (sensor Ds18b20) StartCapture() {
-	fmt.Printf("sensor IDs: %v\n", sensor.sensors)
+	sensors, err := ds18b20.Sensors()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("sensor IDs: %v\n", sensors)
 
 	for {
-		for _, i2cSensor := range sensor.sensors {
+		for _, i2cSensor := range sensors {
 			t, err := ds18b20.Temperature(i2cSensor)
 			if err == nil {
-				fmt.Printf("sensor: %s temperature: %.2f°C\n", sensor, t)
-				sensor.valueChannel <- t
+				fmt.Printf("sensor: %s temperature: %.2f°C\n", i2cSensor, t)
+				// sensor.valueChannel <- t
+			} else {
+				fmt.Printf("error!")
 			}
 		}
-		time.Sleep(time.Second * 20)
+		time.Sleep(time.Second * 10)
 	}
 }
