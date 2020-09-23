@@ -23,12 +23,16 @@ func profileLoop(ch chan string) {
 	}
 }
 
-func commandLoop(ch, hwCh chan string, sensorCh chan float64) {
+func commandLoop(ch chan string, sensorCh chan float64, actor actor.Actor) {
 	for {
 		select {
 		case message := <-ch:
-			fmt.Println("Message for cmdLoop: &v", message)
-			hwCh <- message
+			fmt.Println("Message for actor: &v", message)
+			if message == "on" {
+				actor.On()
+			} else {
+				actor.Off()
+			}
 		case sensorData := <-sensorCh:
 			fmt.Println("Temperature: &v", sensorData)
 		}
@@ -42,15 +46,15 @@ func StartProfile(ch, cmdCh chan string) {
 	// startTime := time.Now().Unix()
 
 	var ds18b20 sensor.Ds18b20
+	var cooler actor.Cooler
 
-	hwCh := make(chan string)
 	sensorCh := make(chan float64)
 
 	ds18b20.Init(sensorCh)
+	cooler.Init()
 
-	go actor.Hardware(hwCh)
 	go ds18b20.StartCapture()
 	go profileLoop(ch)
-	go commandLoop(cmdCh, hwCh, sensorCh)
+	go commandLoop(cmdCh, sensorCh, cooler)
 
 }
