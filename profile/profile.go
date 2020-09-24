@@ -7,21 +7,50 @@ import (
 	"time"
 )
 
+type TempComparison int
+
+const (
+	TOO_COLD TempComparison = iota
+	OK
+	TOO_HOT
+)
+
 type Step struct {
 	Temperature float64
 	Duration    int
 	Name        string
 }
 
+func (step Step) checkTemperature(currentTemperature float64) TempComparison {
+	if currentTemperature < step.Temperature-0.5 {
+		return TOO_COLD
+	} else if currentTemperature > step.Temperature+0.5 {
+		return TOO_HOT
+	} else {
+		return OK
+	}
+}
+
 type Profile []Step
 
-func profileLoop(ch chan string, sensor sensor.Sensor) {
+func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, actor actor.Actor) {
+	firstStep := profile[0]
 	for {
-		time.Sleep(5 * time.Second)
 
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
-		fmt.Printf("Temperature: %v\n", sensor.GetValue())
+		sensorTemp := sensor.GetValue()
+		fmt.Printf("Temperature: %v\n", sensorTemp)
+
+		temperatureState := firstStep.checkTemperature(sensorTemp)
+
+		if temperatureState != OK {
+			actor.On()
+		} else {
+			actor.Off()
+		}
+
 		ch <- "tick"
+		time.Sleep(5 * time.Second)
 	}
 }
 
@@ -44,6 +73,8 @@ func StartProfile(ch, cmdCh chan string) {
 
 	// stepNumber := 0
 	// startTime := time.Now().Unix()
+	step := Step{Temperature: 24, Duration: 2 * 60, Name: "Test"}
+	profile := []Step{step}
 
 	var ds18b20 sensor.Ds18b20
 	var cooler actor.Cooler
@@ -52,7 +83,7 @@ func StartProfile(ch, cmdCh chan string) {
 	cooler.Init()
 
 	ds18b20.StartCapture()
-	go profileLoop(ch, ds18b20)
+	go profileLoop(profile, ch, ds18b20, cooler)
 	go commandLoop(cmdCh, cooler)
 
 }
