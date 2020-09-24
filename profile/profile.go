@@ -8,22 +8,24 @@ import (
 )
 
 type Step struct {
-	Temperature float32
+	Temperature float64
 	Duration    int
 	Name        string
 }
 
 type Profile []Step
 
-func profileLoop(ch chan string) {
+func profileLoop(ch chan string, sensor sensor.Sensor) {
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(5 * time.Second)
+
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
+		fmt.Printf("Temperature: %v\n", sensor.GetValue())
 		ch <- "tick"
 	}
 }
 
-func commandLoop(ch chan string, sensorCh chan float64, actor actor.Actor) {
+func commandLoop(ch chan string, actor actor.Actor) {
 	for {
 		select {
 		case message := <-ch:
@@ -33,8 +35,6 @@ func commandLoop(ch chan string, sensorCh chan float64, actor actor.Actor) {
 			} else {
 				actor.Off()
 			}
-		case sensorData := <-sensorCh:
-			fmt.Println("Temperature: &v", sensorData)
 		}
 	}
 }
@@ -48,13 +48,11 @@ func StartProfile(ch, cmdCh chan string) {
 	var ds18b20 sensor.Ds18b20
 	var cooler actor.Cooler
 
-	sensorCh := make(chan float64)
-
-	ds18b20.Init(sensorCh)
+	ds18b20.Init()
 	cooler.Init()
 
-	go ds18b20.StartCapture()
-	go profileLoop(ch)
-	go commandLoop(cmdCh, sensorCh, cooler)
+	ds18b20.StartCapture()
+	go profileLoop(ch, ds18b20)
+	go commandLoop(cmdCh, cooler)
 
 }
