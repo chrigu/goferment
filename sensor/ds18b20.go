@@ -13,7 +13,7 @@ type Ds18b20 struct {
 }
 
 func (sensor Ds18b20) GetValue() float64 {
-	return sensor.value
+	return sensor.readSensor()
 }
 
 func (sensor Ds18b20) GetUnit() SensorUnit {
@@ -30,8 +30,22 @@ func (sensor Ds18b20) Init() {
 	fmt.Printf("sensor IDs: %v\n", sensor.sensors)
 }
 
+func (sensor Ds18b20) readSensor() {
+	for _, i2cSensor := range sensors {
+		t, err := ds18b20.Temperature(i2cSensor)
+		if err == nil {
+			fmt.Printf("sensor: %s temperature: %.2f°C\n", i2cSensor, t)
+			sensor.value = t
+		} else {
+			fmt.Printf("error!")
+		}
+	}
+}
+
 func (sensor Ds18b20) StartCapture() {
+	
 	sensors, err := ds18b20.Sensors()
+
 	if err != nil {
 		panic(err)
 	}
@@ -40,17 +54,9 @@ func (sensor Ds18b20) StartCapture() {
 
 	go func() {
 		for {
-			for _, i2cSensor := range sensors {
-				t, err := ds18b20.Temperature(i2cSensor)
-				if err == nil {
-					fmt.Printf("sensor: %s temperature: %.2f°C\n", i2cSensor, t)
-					sensor.value = t
-					// sensor.ch <- t
-				} else {
-					fmt.Printf("error!")
-				}
-			}
+			sensor.readSensor()
 			time.Sleep(time.Second * 10)
 		}
 	}()
+
 }
