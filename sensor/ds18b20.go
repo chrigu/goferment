@@ -44,7 +44,7 @@ func (sensor *Ds18b20) readSensor() {
 	}
 }
 
-func (sensor Ds18b20) StartCapture() {
+func (sensor *Ds18b20) StartCapture() {
 
 	sensors, err := ds18b20.Sensors()
 

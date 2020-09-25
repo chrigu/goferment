@@ -76,7 +76,7 @@ func StartProfile(ch, cmdCh chan string) {
 	step := Step{Temperature: 24, Duration: 2 * 60, Name: "Test"}
 	profile := []Step{step}
 
-	var ds18b20 *sensor.Ds18b20
+	ds18b20 := &sensor.Ds18b20{}
 	var cooler actor.Cooler
 
 	ds18b20.Init()
