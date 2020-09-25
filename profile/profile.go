@@ -43,7 +43,7 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, actor ac
 
 		temperatureState := firstStep.checkTemperature(sensorTemp)
 
-		if temperatureState != OK {
+		if temperatureState == TOO_COLD {
 			actor.On()
 		} else {
 			actor.Off()

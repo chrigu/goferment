@@ -13,25 +13,32 @@ type Cooler struct {
 }
 
 func (actor Cooler) On() bool {
+	actor.pin = actor.initPin(10)
 	actor.pin.High()
 	fmt.Println("high")
 	return true
 }
 
 func (actor Cooler) Off() bool {
+	actor.pin = actor.initPin(10)
 	actor.pin.Low()
 	fmt.Println("low")
 	return true
 }
 
 func (actor Cooler) Init() bool {
-	actor.pin = rpio.Pin(10)
+	actor.pin = actor.initPin(10)
+	return true
+}
+
+func (actor Cooler) initPin(pinId int) rpio.Pin {
+	pin := rpio.Pin(pinId)
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
-		return false
+		return pin
 	}
-	actor.pin.Output()
-	return true
+	pin.Output()
+	return pin
 }
 
 func (actor Cooler) TearDown() {
