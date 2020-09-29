@@ -15,13 +15,13 @@ const (
 	TOO_HOT
 )
 
-type Step struct {
+type ProfileStep struct {
 	Temperature float64
 	Duration    int
 	Name        string
 }
 
-func (step Step) checkTemperature(currentTemperature float64) TempComparison {
+func (step *ProfileStep) checkTemperature(currentTemperature float64) TempComparison {
 	if currentTemperature < step.Temperature-0.5 {
 		return TOO_COLD
 	} else if currentTemperature > step.Temperature+0.5 {
@@ -31,22 +31,49 @@ func (step Step) checkTemperature(currentTemperature float64) TempComparison {
 	}
 }
 
-type Profile []Step
+type Profile []ProfileStep
 
-func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, actor actor.Actor) {
-	firstStep := profile[0]
+type CurrentStep struct {
+	*ProfileStep
+	active    bool
+	startTime time.Time
+}
+
+func (currentStep CurrentStep) activateStep(temperatureState TempComparison) {
+
+	if currentStep.active {
+		return
+	}
+
+	if temperatureState == OK {
+		currentStep.active = true
+		currentStep.startTime = time.Now()
+	}
+}
+
+func (currentStep CurrentStep) stepTimeLeft() {
+
+}
+
+func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
+	currentStep := CurrentStep{ProfileStep: &profile[0], active: false}
 	for {
 
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
 		sensorTemp := sensor.GetValue()
 		fmt.Printf("Temperature: %v\n", sensorTemp)
 
-		temperatureState := firstStep.checkTemperature(sensorTemp)
+		temperatureState := currentStep.checkTemperature(sensorTemp)
+		currentStep.activateStep(temperatureState)
 
-		if temperatureState == TOO_COLD {
-			actor.On()
-		} else {
-			actor.Off()
+		switch temperatureState {
+		case TOO_COLD:
+			heater.On()
+		case TOO_HOT:
+			cooler.On()
+		default:
+			heater.Off()
+			cooler.Off()
 		}
 
 		ch <- "tick"
@@ -69,21 +96,24 @@ func commandLoop(ch chan string, actor actor.Actor) {
 }
 
 // StartProfile starts a defined temperature profile with one or multiple steps
-func StartProfile(ch, cmdCh chan string) {
+func StartProfile(profile Profile) (chan string, chan string) {
+
+	cmdCh := make(chan string)
+	ch := make(chan string)
 
 	// stepNumber := 0
 	// startTime := time.Now().Unix()
-	step := Step{Temperature: 24, Duration: 2 * 60, Name: "Test"}
-	profile := []Step{step}
 
 	ds18b20 := &sensor.Ds18b20{}
-	var cooler actor.Cooler
+	cooler := actor.NewTemperatureActor("cooling", actor.COOLING, 10)
 
 	ds18b20.Init()
 	cooler.Init()
 
 	ds18b20.StartCapture()
-	go profileLoop(profile, ch, ds18b20, cooler)
+	go profileLoop(profile, ch, ds18b20, nil, cooler)
 	go commandLoop(cmdCh, cooler)
+
+	return cmdCh, ch
 
 }

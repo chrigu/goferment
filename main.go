@@ -19,13 +19,17 @@ var webCh, profileCh, profileCmdCh chan string
 func main() {
 
 	webCh = make(chan string)
-	profileCh = make(chan string)
-	profileCmdCh = make(chan string)
+	var profileCh, profileCmdCh chan string
+
+	step1 := profile.ProfileStep{Temperature: 24, Duration: 2 * 60, Name: "Test"}
+	step2 := profile.ProfileStep{Temperature: 29, Duration: 2 * 60, Name: "Test"}
+
+	fermentProfile := []profile.ProfileStep{step1, step2}
 
 	server := server.CreateServer(webCh)
 	go listener(webCh, profileCh, profileCmdCh)
 
-	profile.StartProfile(profileCh, profileCmdCh)
+	profileCmdCh, profileCh = profile.StartProfile(fermentProfile)
 
 	fmt.Println("Server starting")
 
