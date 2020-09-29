@@ -68,12 +68,20 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 
 		switch temperatureState {
 		case TOO_COLD:
-			heater.On()
+			if heater != nil {
+				heater.On()
+			}
 		case TOO_HOT:
-			cooler.On()
+			if cooler != nil {
+				cooler.On()		
+			}
 		default:
-			heater.Off()
-			cooler.Off()
+			if heater != nil {
+				heater.Off()
+			}
+			if cooler != nil {
+				cooler.Off()		
+			}
 		}
 
 		ch <- "tick"
@@ -105,14 +113,14 @@ func StartProfile(profile Profile) (chan string, chan string) {
 	// startTime := time.Now().Unix()
 
 	ds18b20 := &sensor.Ds18b20{}
-	cooler := actor.NewTemperatureActor("cooling", actor.COOLING, 10)
+	// cooler := actor.NewTemperatureActor("cooling", actor.COOLING, 10)
+	heater := actor.NewTemperatureActor("heater", actor.HEATING, 10)
 
 	ds18b20.Init()
-	cooler.Init()
 
 	ds18b20.StartCapture()
-	go profileLoop(profile, ch, ds18b20, nil, cooler)
-	go commandLoop(cmdCh, cooler)
+	go profileLoop(profile, ch, ds18b20, heater, nil)
+	go commandLoop(cmdCh, heater)
 
 	return cmdCh, ch
 

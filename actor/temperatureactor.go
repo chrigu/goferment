@@ -14,32 +14,27 @@ type TemperatureActor struct {
 }
 
 func (actor *TemperatureActor) On() bool {
-	actor.pin = actor.initPin(10)
+	fmt.Println("on1")
+	fmt.Println("on", actor.pin)
 	actor.pin.High()
 	fmt.Println("high")
 	return true
 }
 
 func (actor *TemperatureActor) Off() bool {
-	actor.pin = actor.initPin(10)
 	actor.pin.Low()
 	fmt.Println("low")
 	return true
 }
 
-func (actor *TemperatureActor) Init() bool {
-	actor.pin = actor.initPin(10)
-	return true
-}
 
-func (actor *TemperatureActor) initPin(pinId int) rpio.Pin {
-	pin := rpio.Pin(pinId)
+func (actor *TemperatureActor) Init() bool {
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
-		return pin
+		return false
 	}
-	pin.Output()
-	return pin
+	actor.pin.Output()
+	return true
 }
 
 func (actor *TemperatureActor) TearDown() {
@@ -57,5 +52,7 @@ func (actor *TemperatureActor) getType() ActorType {
 func NewTemperatureActor(name string, actorType ActorType, pinId int) *TemperatureActor {
 	pin := rpio.Pin(pinId)
 	tr := TemperatureActor{Name: name, pin: pin, RegulatorType: actorType}
+
+	tr.Init()
 	return &tr
 }
