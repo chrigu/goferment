@@ -27,9 +27,9 @@ func main() {
 	fermentProfile := []profile.ProfileStep{step1, step2}
 
 	server := server.CreateServer(webCh)
-	go listener(webCh, profileCh, profileCmdCh)
-
 	profileCmdCh, profileCh = profile.StartProfile(fermentProfile)
+
+	go listener(webCh, profileCh, profileCmdCh)
 
 	fmt.Println("Server starting")
 
