@@ -10,9 +10,9 @@ import (
 type TempComparison int
 
 const (
-	TOO_COLD TempComparison = iota
+	LOWER_LIMIT TempComparison = iota
 	OK
-	TOO_HOT
+	UPPER_LIMIT
 )
 
 type ProfileStep struct {
@@ -21,22 +21,25 @@ type ProfileStep struct {
 	Name        string
 }
 
-func (step *ProfileStep) checkTemperature(currentTemperature float64) TempComparison {
-	if currentTemperature < step.Temperature-0.5 {
-		return TOO_COLD
-	} else if currentTemperature > step.Temperature+0.5 {
-		return TOO_HOT
-	} else {
-		return OK
-	}
-}
-
 type Profile []ProfileStep
 
 type CurrentStep struct {
 	*ProfileStep
 	active    bool
 	startTime time.Time
+	delta     float64
+	coolerOn  bool
+	heaterOn  bool
+}
+
+func (step *CurrentStep) checkTemperature(currentTemperature float64) TempComparison {
+	if currentTemperature < step.Temperature-step.delta/2 {
+		return LOWER_LIMIT
+	} else if currentTemperature > step.Temperature+step.delta/2 {
+		return UPPER_LIMIT
+	} else {
+		return OK
+	}
 }
 
 func (currentStep CurrentStep) activateStep(temperatureState TempComparison) {
@@ -55,8 +58,37 @@ func (currentStep CurrentStep) stepTimeLeft() {
 
 }
 
+func (currentStep CurrentStep) coolerHysteresis(temperatureState TempComparison) bool {
+	switch temperatureState {
+	case LOWER_LIMIT:
+		currentStep.coolerOn = false
+		return false
+	case UPPER_LIMIT:
+		currentStep.coolerOn = true
+		return true
+	default:
+		return currentStep.coolerOn
+	}
+}
+
+func (currentStep CurrentStep) heaterHysteresis(temperatureState TempComparison) bool {
+	switch temperatureState {
+	case LOWER_LIMIT:
+		currentStep.heaterOn = true
+		return true
+	case UPPER_LIMIT:
+		currentStep.heaterOn = false
+		return false
+	default:
+		return currentStep.heaterOn
+	}
+}
+
 func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
-	currentStep := CurrentStep{ProfileStep: &profile[0], active: false}
+
+	hysterisisDelta := 1.0
+
+	currentStep := CurrentStep{ProfileStep: &profile[0], active: false, delta: hysterisisDelta}
 	for {
 
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
@@ -64,25 +96,24 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 		fmt.Printf("Temperature: %v\n", sensorTemp)
 
 		temperatureState := currentStep.checkTemperature(sensorTemp)
-		currentStep.activateStep(temperatureState)
 
-		switch temperatureState {
-		case TOO_COLD:
-			if heater != nil {
-				heater.On()
-			}
-		case TOO_HOT:
-			if cooler != nil {
-				cooler.On()		
-			}
-		default:
-			if heater != nil {
-				heater.Off()
-			}
-			if cooler != nil {
-				cooler.Off()		
-			}
+		if temperatureState == OK {
+			currentStep.activateStep(temperatureState)
 		}
+
+		if currentStep.coolerHysteresis(temperatureState) {
+			cooler.On()
+		} else {
+			cooler.Off()
+		}
+
+		if currentStep.heaterHysteresis(temperatureState) {
+			heater.On()
+		} else {
+			heater.Off()
+		}
+
+		// handle time elapsed in step
 
 		ch <- "tick"
 		time.Sleep(5 * time.Second)
