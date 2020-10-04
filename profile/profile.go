@@ -101,16 +101,20 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 			currentStep.activateStep(temperatureState)
 		}
 
-		if currentStep.coolerHysteresis(temperatureState) {
-			cooler.On()
-		} else {
-			cooler.Off()
+		if cooler != nil {
+			if currentStep.coolerHysteresis(temperatureState) {
+				cooler.On()
+			} else {
+				cooler.Off()
+			}
 		}
 
-		if currentStep.heaterHysteresis(temperatureState) {
-			heater.On()
-		} else {
-			heater.Off()
+		if heater != nil {
+			if currentStep.heaterHysteresis(temperatureState) {
+				heater.On()
+			} else {
+				heater.Off()
+			}
 		}
 
 		// handle time elapsed in step
