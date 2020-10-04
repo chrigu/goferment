@@ -42,7 +42,7 @@ func (step *CurrentStep) checkTemperature(currentTemperature float64) TempCompar
 	}
 }
 
-func (currentStep CurrentStep) activateStep(temperatureState TempComparison) {
+func (currentStep *CurrentStep) activateStep(temperatureState TempComparison) {
 
 	if currentStep.active {
 		return
@@ -54,11 +54,11 @@ func (currentStep CurrentStep) activateStep(temperatureState TempComparison) {
 	}
 }
 
-func (currentStep CurrentStep) stepTimeLeft() {
+func (currentStep *CurrentStep) stepTimeLeft() {
 
 }
 
-func (currentStep CurrentStep) coolerHysteresis(temperatureState TempComparison) bool {
+func (currentStep *CurrentStep) coolerHysteresis(temperatureState TempComparison) bool {
 	switch temperatureState {
 	case LOWER_LIMIT:
 		currentStep.coolerOn = false
@@ -71,7 +71,7 @@ func (currentStep CurrentStep) coolerHysteresis(temperatureState TempComparison)
 	}
 }
 
-func (currentStep CurrentStep) heaterHysteresis(temperatureState TempComparison) bool {
+func (currentStep *CurrentStep) heaterHysteresis(temperatureState TempComparison) bool {
 	switch temperatureState {
 	case LOWER_LIMIT:
 		currentStep.heaterOn = true

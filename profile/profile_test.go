@@ -38,7 +38,7 @@ func TestCheckCoolerOff(t *testing.T) {
 	tempComp := LOWER_LIMIT
 	currentStep := CurrentStep{coolerOn: true}
 	coolerOn := currentStep.coolerHysteresis(tempComp)
-	if coolerOn {
+	if coolerOn || currentStep.coolerOn {
 		t.Error("Cooler should be off")
 	}
 }
@@ -47,7 +47,7 @@ func TestCheckCoolerOffWhileOk(t *testing.T) {
 	tempComp := OK
 	currentStep := CurrentStep{coolerOn: true}
 	coolerOn := currentStep.coolerHysteresis(tempComp)
-	if !coolerOn {
+	if !coolerOn || !currentStep.coolerOn {
 		t.Error("Cooler should be on")
 	}
 }
@@ -56,7 +56,34 @@ func TestCheckCoolerOnWhileOk(t *testing.T) {
 	tempComp := OK
 	currentStep := CurrentStep{coolerOn: false}
 	coolerOn := currentStep.coolerHysteresis(tempComp)
-	if coolerOn {
+	if coolerOn || currentStep.coolerOn {
 		t.Error("Cooler should be off")
+	}
+}
+
+func TestCheckHeaterOff(t *testing.T) {
+	tempComp := LOWER_LIMIT
+	currentStep := CurrentStep{heaterOn: true}
+	heaterOn := currentStep.heaterHysteresis(tempComp)
+	if !heaterOn || !currentStep.heaterOn {
+		t.Error("Heater should be on")
+	}
+}
+
+func TestCheckHeaterOffWhileOk(t *testing.T) {
+	tempComp := OK
+	currentStep := CurrentStep{heaterOn: true}
+	heaterOn := currentStep.heaterHysteresis(tempComp)
+	if !heaterOn || !currentStep.heaterOn {
+		t.Error("Heater should be on")
+	}
+}
+
+func TestCheckHeaterOnWhileOk(t *testing.T) {
+	tempComp := OK
+	currentStep := CurrentStep{heaterOn: false}
+	heaterOn := currentStep.heaterHysteresis(tempComp)
+	if heaterOn || currentStep.heaterOn {
+		t.Error("Heater should be off")
 	}
 }
