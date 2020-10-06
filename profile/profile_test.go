@@ -87,3 +87,12 @@ func TestCheckHeaterOnWhileOk(t *testing.T) {
 		t.Error("Heater should be off")
 	}
 }
+
+func TestStepActivation(t *testing.T) {
+	currentStep := CurrentStep{active: false}
+
+	currentStep.activateStep()
+	if !currentStep.active || currentStep.startTime.IsZero() {
+		t.Error("CurrentStep should be activated")
+	}
+}

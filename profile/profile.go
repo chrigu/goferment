@@ -15,6 +15,8 @@ const (
 	UPPER_LIMIT
 )
 
+const LOOP_INTERVAL = 10
+
 type ProfileStep struct {
 	Temperature float64
 	Duration    int
@@ -42,20 +44,23 @@ func (step *CurrentStep) checkTemperature(currentTemperature float64) TempCompar
 	}
 }
 
-func (currentStep *CurrentStep) activateStep(temperatureState TempComparison) {
+func (currentStep *CurrentStep) activateStep() {
 
 	if currentStep.active {
 		return
 	}
 
-	if temperatureState == OK {
-		currentStep.active = true
-		currentStep.startTime = time.Now()
-	}
+	currentStep.active = true
+	currentStep.startTime = time.Now()
 }
 
-func (currentStep *CurrentStep) stepTimeLeft() {
+func (currentStep *CurrentStep) stepTimeLeft() float64 {
+	duration := time.Since(currentStep.startTime)
+	return float64(currentStep.Duration) - duration.Minutes()
+}
 
+func (currentStep *CurrentStep) hasEnded() bool {
+	return currentStep.stepTimeLeft() > 0
 }
 
 func (currentStep *CurrentStep) coolerHysteresis(temperatureState TempComparison) bool {
@@ -98,7 +103,7 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 		temperatureState := currentStep.checkTemperature(sensorTemp)
 
 		if temperatureState == OK {
-			currentStep.activateStep(temperatureState)
+			currentStep.activateStep()
 		}
 
 		if cooler != nil {
@@ -120,13 +125,24 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 		// handle time elapsed in step
 
 		ch <- "tick"
-		time.Sleep(5 * time.Second)
+		time.Sleep(LOOP_INTERVAL * time.Second)
 	}
 }
 
 func commandLoop(ch chan string, actor actor.Actor) {
 	for {
 		select {
+		/*
+			commands
+				actor on
+				actor off
+				temp +/-
+				stop
+				next step
+
+			init loop
+			log event
+		*/
 		case message := <-ch:
 			fmt.Println("Message for actor: &v", message)
 			if message == "on" {

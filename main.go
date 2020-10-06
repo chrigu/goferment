@@ -16,7 +16,13 @@ var (
 
 var webCh, profileCh, profileCmdCh chan string
 
+func test() {
+
+}
+
 func main() {
+
+	test()
 
 	webCh = make(chan string)
 	var profileCh, profileCmdCh chan string
