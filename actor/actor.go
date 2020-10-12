@@ -12,6 +12,6 @@ type Actor interface {
 	Off() bool
 	Init() bool // use err as return value
 	TearDown()
-	getStatus() bool
-	getType() ActorType
+	GetStatus() bool
+	GetType() ActorType
 }

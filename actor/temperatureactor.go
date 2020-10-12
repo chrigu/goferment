@@ -27,7 +27,6 @@ func (actor *TemperatureActor) Off() bool {
 	return true
 }
 
-
 func (actor *TemperatureActor) Init() bool {
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
@@ -41,11 +40,11 @@ func (actor *TemperatureActor) TearDown() {
 	rpio.Close()
 }
 
-func (actor *TemperatureActor) getStatus() bool {
+func (actor *TemperatureActor) GetStatus() bool {
 	return true
 }
 
-func (actor *TemperatureActor) getType() ActorType {
+func (actor *TemperatureActor) GetType() ActorType {
 	return COOLING
 }
 

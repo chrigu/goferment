@@ -1,9 +1,13 @@
 package profile
 
 import (
+	"encoding/json"
 	"fmt"
 	"goferment/actor"
+	"goferment/logger"
 	"goferment/sensor"
+	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -18,12 +22,14 @@ const (
 const LOOP_INTERVAL = 10
 
 type ProfileStep struct {
-	Temperature float64
-	Duration    int
-	Name        string
+	Temperature float64 `json:"temperature"`
+	Duration    int     `json:"duration"`
+	Name        string  `json:"name"`
 }
 
-type Profile []ProfileStep
+type Profile struct {
+	Steps []ProfileStep `json:"steps"`
+}
 
 type CurrentStep struct {
 	*ProfileStep
@@ -89,11 +95,11 @@ func (currentStep *CurrentStep) heaterHysteresis(temperatureState TempComparison
 	}
 }
 
-func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
+func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
 
 	hysterisisDelta := 1.0
 
-	currentStep := CurrentStep{ProfileStep: &profile[0], active: false, delta: hysterisisDelta}
+	currentStep := CurrentStep{ProfileStep: &profile.Steps[0], active: false, delta: hysterisisDelta}
 	for {
 
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
@@ -124,6 +130,10 @@ func profileLoop(profile Profile, ch chan string, sensor sensor.Sensor, heater, 
 
 		// handle time elapsed in step
 
+		logEntry := logger.LogEntry{Datetime: time.Now(), Temperature: sensorTemp, TargetTemp: currentStep.Temperature, HeaterState: heater.GetStatus(), CoolerState: cooler.GetStatus()}
+
+		logger := logger.ConsoleLogger{}
+		logger.LogState(logEntry)
 		ch <- "tick"
 		time.Sleep(LOOP_INTERVAL * time.Second)
 	}
@@ -154,8 +164,37 @@ func commandLoop(ch chan string, actor actor.Actor) {
 	}
 }
 
+func ReadProfileFromFile(filename string) *Profile {
+	// Open our jsonFile
+	jsonFile, err := os.Open(filename)
+	defer jsonFile.Close()
+	// if we os.Open returns an error then handle it
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully opened ", filename)
+	// defer the closing of our jsonFile so that we can parse it later on
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	// we initialize our Users array
+	var profile Profile
+
+	// we unmarshal our byteArray which contains our
+	// jsonFile's content into 'users' which we defined above
+	json.Unmarshal(byteValue, &profile)
+
+	// we iterate through every user within our users array and
+	// print out the user Type, their name, and their facebook url
+	// as just an example
+	for i := 0; i < len(profile.Steps); i++ {
+		fmt.Printf("step name: %v, duration: %v \n", profile.Steps[i].Name, profile.Steps[i].Duration)
+	}
+
+	return &profile
+}
+
 // StartProfile starts a defined temperature profile with one or multiple steps
-func StartProfile(profile Profile) (chan string, chan string) {
+func StartProfile(profile *Profile) (chan string, chan string) {
 
 	cmdCh := make(chan string)
 	ch := make(chan string)
