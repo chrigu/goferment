@@ -1,8 +1,12 @@
 package profile
 
 import (
+	"math"
 	"testing"
+	"time"
 )
+
+// step & currentstep tests
 
 func TestCheckTempertureTooLow(t *testing.T) {
 	var temp float64 = 20
@@ -94,5 +98,39 @@ func TestStepActivation(t *testing.T) {
 	currentStep.activateStep()
 	if !currentStep.active || currentStep.startTime.IsZero() {
 		t.Error("CurrentStep should be activated")
+	}
+}
+
+func TestCurrentStepTimeLeft(t *testing.T) {
+	minuteDelta := 32
+	duration := 69
+	pastDate := time.Now().Add(-time.Duration(minuteDelta) * time.Minute)
+	currentStep := CurrentStep{startTime: pastDate, ProfileStep: &ProfileStep{Duration: duration}}
+
+	if math.Round(currentStep.stepTimeLeft()) != float64(duration-minuteDelta) {
+		t.Error("Could not calculate time left")
+	}
+
+	if currentStep.hasEnded() {
+		t.Error("Step has not yet ended")
+	}
+}
+
+func TestCurrentStepHasEnded(t *testing.T) {
+	minuteDelta := 11
+	duration := 10
+	pastDate := time.Now().Add(-time.Duration(minuteDelta) * time.Minute)
+	currentStep := CurrentStep{startTime: pastDate, ProfileStep: &ProfileStep{Duration: duration}}
+
+	if !currentStep.hasEnded() {
+		t.Error("Step has ended")
+	}
+}
+
+// json test
+func TestProfileFromJsonFile(t *testing.T) {
+	profile := ReadProfileFromFile("test-profile.json")
+	if profile.Steps[0].Name != "Step 1" || profile.Steps[1].Name != "Step 2" || profile.Steps[2].Name != "Step 3" {
+		t.Error("Steps were not imported correctly")
 	}
 }

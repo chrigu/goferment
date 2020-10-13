@@ -32,7 +32,7 @@ func main() {
 
 	// fermentProfile := profile.Profile{Steps: []profile.ProfileStep{step1, step2}}
 
-	fermentProfile := profile.ReadProfileFromFile("profile.json")
+	fermentProfile := profile.ReadProfileFromFile("profile/test-profile.json")
 
 	server := server.CreateServer(webCh)
 	profileCmdCh, profileCh = profile.StartProfile(fermentProfile)

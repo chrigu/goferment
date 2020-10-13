@@ -66,7 +66,7 @@ func (currentStep *CurrentStep) stepTimeLeft() float64 {
 }
 
 func (currentStep *CurrentStep) hasEnded() bool {
-	return currentStep.stepTimeLeft() > 0
+	return currentStep.stepTimeLeft() < 0
 }
 
 func (currentStep *CurrentStep) coolerHysteresis(temperatureState TempComparison) bool {
@@ -165,27 +165,18 @@ func commandLoop(ch chan string, actor actor.Actor) {
 }
 
 func ReadProfileFromFile(filename string) *Profile {
-	// Open our jsonFile
 	jsonFile, err := os.Open(filename)
 	defer jsonFile.Close()
-	// if we os.Open returns an error then handle it
+
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println("Successfully opened ", filename)
-	// defer the closing of our jsonFile so that we can parse it later on
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-	// we initialize our Users array
 	var profile Profile
-
-	// we unmarshal our byteArray which contains our
-	// jsonFile's content into 'users' which we defined above
 	json.Unmarshal(byteValue, &profile)
 
-	// we iterate through every user within our users array and
-	// print out the user Type, their name, and their facebook url
-	// as just an example
 	for i := 0; i < len(profile.Steps); i++ {
 		fmt.Printf("step name: %v, duration: %v \n", profile.Steps[i].Name, profile.Steps[i].Duration)
 	}
