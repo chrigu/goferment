@@ -99,8 +99,20 @@ func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater,
 
 	hysterisisDelta := 1.0
 
-	currentStep := CurrentStep{ProfileStep: &profile.Steps[0], active: false, delta: hysterisisDelta}
+	stepIndex := 0
+	currentStep := CurrentStep{ProfileStep: &profile.Steps[stepIndex], active: false, delta: hysterisisDelta}
 	for {
+
+		// move to fn
+		if currentStep.active && currentStep.hasEnded() {
+			stepIndex++
+
+			if stepIndex == len(profile.Steps) {
+				break
+			}
+
+			currentStep = CurrentStep{ProfileStep: &profile.Steps[stepIndex], active: false, delta: hysterisisDelta}
+		}
 
 		// fmt.Printf("Current Unix Time: %v\n", time.Now().Unix())
 		sensorTemp := sensor.GetValue()
