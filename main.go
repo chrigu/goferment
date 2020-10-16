@@ -18,6 +18,8 @@ var webCh, profileCh, profileCmdCh chan string
 
 func test() {
 
+	// some := logger.LogEntry{Datetime: time.Now(), HeaterState: true, Temperature: 24.5}
+
 }
 
 func main() {

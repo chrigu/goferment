@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TempComparison int
@@ -97,6 +99,9 @@ func (currentStep *CurrentStep) heaterHysteresis(temperatureState TempComparison
 
 func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
 
+	consoleLogger := logger.ConsoleLogger{}
+	dynamoLogger := logger.DynamoDbLogger{}
+
 	hysterisisDelta := 1.0
 
 	stepIndex := 0
@@ -142,10 +147,12 @@ func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater,
 
 		// handle time elapsed in step
 
-		logEntry := logger.LogEntry{Datetime: time.Now(), Temperature: sensorTemp, TargetTemp: currentStep.Temperature, HeaterState: heater.GetStatus(), CoolerState: cooler.GetStatus()}
+		// logEntry := logger.LogEntry{Datetime: time.Now(), Temperature: sensorTemp, TargetTemp: currentStep.Temperature, HeaterState: heater.GetStatus(), CoolerState: cooler.GetStatus()}
+		logEntry := logger.LogEntry{Datetime: time.Now(), Temperature: sensorTemp, TargetTemp: currentStep.Temperature, HeaterState: heater.GetStatus(), CoolerState: false}
+		log.Debugf("%v: %v %v", currentStep.Name, currentStep.active, currentStep.stepTimeLeft())
 
-		logger := logger.ConsoleLogger{}
-		logger.LogState(logEntry)
+		consoleLogger.LogState(logEntry)
+		dynamoLogger.LogState(logEntry)
 		ch <- "tick"
 		time.Sleep(LOOP_INTERVAL * time.Second)
 	}

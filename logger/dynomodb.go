@@ -4,25 +4,42 @@ package logger
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/guregu/dynamo"
 )
 
-type DynamoDbLogger struct {
-	url      string
-	user     string
-	password string
+type dynamoLogEntry struct {
+	Datetime    time.Time `dynamo:"datetime"`
+	HeaterState bool      `dynamo:"heaterState"`
+	CoolerState bool      `dynamo:"coolerState"`
+	Temperature float64   `dynamo:"temperature"`
+	TargetTemp  float64   `dynamo:"targetTemp"`
+	StepActive  bool      `dynamo:"stepActive"`
 }
+
+func dynamoLogEntryFromLogEntry(logEntry LogEntry) dynamoLogEntry {
+	return dynamoLogEntry{Datetime: logEntry.Datetime, HeaterState: logEntry.HeaterState, CoolerState: logEntry.CoolerState,
+		Temperature: logEntry.Temperature, StepActive: logEntry.StepActive}
+}
+
+type DynamoDbLogger struct{}
 
 func (*DynamoDbLogger) LogState(logEntry LogEntry) {
 	fmt.Println(logEntry)
 
-	db := dynamo.New(session.New(), &aws.Config{Region: aws.String("eu-west-1")})
+	// todo: get from env
+	db := dynamo.New(session.New(), &aws.Config{
+		Region:      aws.String("eu-central-1"),
+		Credentials: credentials.NewSharedCredentials("", "goferment"),
+	})
+
 	table := db.Table("LogEntries")
 
-	err := table.Put(logEntry).Run()
+	err := table.Put(dynamoLogEntryFromLogEntry(logEntry)).Run()
 
 	fmt.Println(err)
 }

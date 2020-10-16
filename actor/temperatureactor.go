@@ -1,8 +1,7 @@
 package actor
 
 import (
-	"fmt"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/stianeikeland/go-rpio"
 )
 
@@ -14,22 +13,20 @@ type TemperatureActor struct {
 }
 
 func (actor *TemperatureActor) On() bool {
-	fmt.Println("on1")
-	fmt.Println("on", actor.pin)
+	log.Debugf("Pin %v high", actor.pin)
 	actor.pin.High()
-	fmt.Println("high")
 	return true
 }
 
 func (actor *TemperatureActor) Off() bool {
+	log.Debugf("Pin %v low", actor.pin)
 	actor.pin.Low()
-	fmt.Println("low")
 	return true
 }
 
 func (actor *TemperatureActor) Init() bool {
 	if err := rpio.Open(); err != nil {
-		fmt.Println(err)
+		log.Warnf("Pin %v could not be intialized!", actor.pin)
 		return false
 	}
 	actor.pin.Output()
