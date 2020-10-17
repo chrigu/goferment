@@ -7,6 +7,7 @@ import (
 type ConsoleLogger struct {
 }
 
-func (*ConsoleLogger) LogState(logEntry LogEntry) {
+func (*ConsoleLogger) LogState(logEntry LogEntry) bool {
 	log.Info(logEntry)
+	return true
 }

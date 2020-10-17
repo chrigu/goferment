@@ -97,10 +97,7 @@ func (currentStep *CurrentStep) heaterHysteresis(temperatureState TempComparison
 	}
 }
 
-func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor) {
-
-	consoleLogger := logger.ConsoleLogger{}
-	dynamoLogger := logger.DynamoDbLogger{}
+func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater, cooler actor.Actor, loggers []logger.Logger) {
 
 	hysterisisDelta := 1.0
 
@@ -151,10 +148,15 @@ func profileLoop(profile *Profile, ch chan string, sensor sensor.Sensor, heater,
 		logEntry := logger.LogEntry{Datetime: time.Now(), Temperature: sensorTemp, TargetTemp: currentStep.Temperature, HeaterState: heater.GetStatus(), CoolerState: false}
 		log.Debugf("%v: %v %v", currentStep.Name, currentStep.active, currentStep.stepTimeLeft())
 
-		consoleLogger.LogState(logEntry)
-		dynamoLogger.LogState(logEntry)
+		profileLog(loggers, logEntry)
 		ch <- "tick"
 		time.Sleep(LOOP_INTERVAL * time.Second)
+	}
+}
+
+func profileLog(loggers []logger.Logger, logEntry logger.LogEntry) {
+	for _, logger := range loggers {
+		logger.LogState(logEntry)
 	}
 }
 
@@ -204,7 +206,7 @@ func ReadProfileFromFile(filename string) *Profile {
 }
 
 // StartProfile starts a defined temperature profile with one or multiple steps
-func StartProfile(profile *Profile) (chan string, chan string) {
+func StartProfile(profile *Profile, loggers []logger.Logger) (chan string, chan string) {
 
 	cmdCh := make(chan string)
 	ch := make(chan string)
@@ -219,7 +221,7 @@ func StartProfile(profile *Profile) (chan string, chan string) {
 	ds18b20.Init()
 
 	ds18b20.StartCapture()
-	go profileLoop(profile, ch, ds18b20, heater, nil)
+	go profileLoop(profile, ch, ds18b20, heater, nil, loggers)
 	go commandLoop(cmdCh, heater)
 
 	return cmdCh, ch

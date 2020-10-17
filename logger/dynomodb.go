@@ -26,20 +26,28 @@ func dynamoLogEntryFromLogEntry(logEntry LogEntry) dynamoLogEntry {
 		Temperature: logEntry.Temperature, StepActive: logEntry.StepActive}
 }
 
-type DynamoDbLogger struct{}
+type DynamoDbLogger struct {
+	db        *dynamo.DB
+	tableName string
+}
 
-func (*DynamoDbLogger) LogState(logEntry LogEntry) {
-	fmt.Println(logEntry)
-
-	// todo: get from env
-	db := dynamo.New(session.New(), &aws.Config{
-		Region:      aws.String("eu-central-1"),
-		Credentials: credentials.NewSharedCredentials("", "goferment"),
+func (dl *DynamoDbLogger) InitDb(region, awsProfile, tableName string) bool {
+	dl.db = dynamo.New(session.New(), &aws.Config{
+		Region:      aws.String(region),
+		Credentials: credentials.NewSharedCredentials("", awsProfile),
 	})
 
-	table := db.Table("LogEntries")
+	dl.tableName = tableName
 
+	return false // todo: return state
+}
+
+func (dl *DynamoDbLogger) LogState(logEntry LogEntry) bool {
+	fmt.Println(logEntry)
+
+	table := dl.db.Table(dl.tableName)
 	err := table.Put(dynamoLogEntryFromLogEntry(logEntry)).Run()
 
 	fmt.Println(err)
+	return true // todo: return state
 }

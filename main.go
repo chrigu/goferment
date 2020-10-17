@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"goferment/logger"
 	"goferment/profile"
 	"goferment/server"
 
@@ -26,6 +28,14 @@ func main() {
 
 	test()
 
+	awsRegion := os.Getenv("AWS_REGION")
+	awsProfile := os.Getenv("AWS_PROFILE")
+	awsTableName := os.Getenv("AWS_TABLENAME")
+
+	consoleLogger := &logger.ConsoleLogger{}
+	dynamoLogger := &logger.DynamoDbLogger{}
+	dynamoLogger.InitDb(awsRegion, awsProfile, awsTableName)
+
 	webCh = make(chan string)
 	var profileCh, profileCmdCh chan string
 
@@ -37,7 +47,7 @@ func main() {
 	fermentProfile := profile.ReadProfileFromFile("profile/test-profile.json")
 
 	server := server.CreateServer(webCh)
-	profileCmdCh, profileCh = profile.StartProfile(fermentProfile)
+	profileCmdCh, profileCh = profile.StartProfile(fermentProfile, []logger.Logger{consoleLogger, dynamoLogger})
 
 	go listener(webCh, profileCh, profileCmdCh)
 
