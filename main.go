@@ -39,11 +39,6 @@ func main() {
 	webCh = make(chan string)
 	var profileCh, profileCmdCh chan string
 
-	// step1 := profile.ProfileStep{Temperature: 24, Duration: 2 * 60, Name: "Test"}
-	// step2 := profile.ProfileStep{Temperature: 29, Duration: 2 * 60, Name: "Test"}
-
-	// fermentProfile := profile.Profile{Steps: []profile.ProfileStep{step1, step2}}
-
 	fermentProfile := profile.ReadProfileFromFile("profile/test-profile.json")
 
 	server := server.CreateServer(webCh)
