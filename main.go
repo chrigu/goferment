@@ -3,10 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
-	"goferment/logger"
-	"goferment/profile"
 	"goferment/server"
 
 	"golang.org/x/sync/errgroup"
@@ -28,21 +25,21 @@ func main() {
 
 	test()
 
-	awsRegion := os.Getenv("AWS_REGION")
-	awsProfile := os.Getenv("AWS_PROFILE")
-	awsTableName := os.Getenv("AWS_TABLENAME")
+	// awsRegion := os.Getenv("AWS_REGION")
+	// awsProfile := os.Getenv("AWS_PROFILE")
+	// awsTableName := os.Getenv("AWS_TABLENAME")
 
-	consoleLogger := &logger.ConsoleLogger{}
-	dynamoLogger := &logger.DynamoDbLogger{}
-	dynamoLogger.InitDb(awsRegion, awsProfile, awsTableName)
+	//consoleLogger := &logger.ConsoleLogger{}
+	// dynamoLogger := &logger.DynamoDbLogger{}
+	// dynamoLogger.InitDb(awsRegion, awsProfile, awsTableName)
 
 	webCh = make(chan string)
 	var profileCh, profileCmdCh chan string
 
-	fermentProfile := profile.ReadProfileFromFile("profile/test-profile.json")
+	//fermentProfile := profile.ReadProfileFromFile("profile/test-profile.json")
 
 	server := server.CreateServer(webCh)
-	profileCmdCh, profileCh = profile.StartProfile(fermentProfile, []logger.Logger{consoleLogger, dynamoLogger})
+	//profileCmdCh, profileCh = profile.StartProfile(fermentProfile, []logger.Logger{consoleLogger, dynamoLogger})
 
 	go listener(webCh, profileCh, profileCmdCh)
 
