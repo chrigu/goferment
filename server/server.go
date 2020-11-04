@@ -5,9 +5,16 @@ import (
 	"net/http/httputil"
 	"os"
 	"time"
+	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"goferment/profile"
 )
+
+type BrewController interface {
+	StartProfile(profile.Profile)
+}
 
 func router(ch chan string) http.Handler {
 	router := gin.Default()
@@ -19,6 +26,23 @@ func router(ch chan string) http.Handler {
 
 	api := router.Group("/api")
 	{
+
+		profile := api.Group("/profile")
+		{
+			profile.POST("/", func(c *gin.Context) {
+				body, _ := ioutil.ReadAll(c.Request.Body)
+				log.Info(string(body))
+				c.JSON(
+					http.StatusOK,
+					gin.H{
+						"code":  http.StatusOK,
+						"error": "Welcome server 01",
+					},
+				)
+			})
+		}
+
+
 		api.GET("/", func(c *gin.Context) {
 			ch <- "on"
 			c.JSON(
